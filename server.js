@@ -1,4 +1,4 @@
-// server.js — VoiceSplit backend with auth + SQLite + email + local parser + OpenAI fallback
+// server.js — VoiceSplit backend with auth + SQLite + email + local parser + OpenAI 
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -75,6 +75,58 @@ if (MAIL_HOST && MAIL_USER && MAIL_PASS) {
 } else {
   console.warn('Email not configured (missing EMAIL_HOST/EMAIL_USER/EMAIL_PASS)');
 }
+// Current user info (for sidebar/profile)
+app.get('/api/me', requireLogin, (req, res) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: 'Not logged in' });
+  }
+  res.json({
+    id: req.session.user.id,
+    username: req.session.user.username
+  });
+});
+
+// Change password
+app.post('/api/change-password', requireLogin, (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
+
+  const userId = req.session.user.id;
+  const username = req.session.user.username;
+
+  if (typeof useMemoryStore !== 'undefined' && useMemoryStore) {
+    // In-memory mode (Render)
+    const idx = memoryUsers.findIndex(u => u.id === userId);
+    if (idx === -1) return res.status(404).json({ error: 'User not found' });
+    if (memoryUsers[idx].password !== currentPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+    memoryUsers[idx].password = newPassword;
+    return res.json({ ok: true });
+  }
+
+  // SQLite mode (local dev)
+  db.get('SELECT * FROM users WHERE id = ?', [userId], (err, row) => {
+    if (err) {
+      console.error('DB error on change-password (select):', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (!row) return res.status(404).json({ error: 'User not found' });
+    if (row.password !== currentPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    db.run('UPDATE users SET password = ? WHERE id = ?', [newPassword, userId], (err2) => {
+      if (err2) {
+        console.error('DB error on change-password (update):', err2);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      return res.json({ ok: true });
+    });
+  });
+});
 
 // Helper: send result emails
 async function sendResultEmails(emails, result, options = {}) {
