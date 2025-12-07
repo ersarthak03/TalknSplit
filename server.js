@@ -488,7 +488,7 @@ app.post('/api/process-transcript', requireLogin, async (req, res) => {
         Object.keys(fast.balances)
       );
 
-      await sendResultEmails(emailList, fast, {
+       sendResultEmails(emailList, fast, {
         transcript,
         username: req.session.user?.username,
       });
@@ -506,7 +506,8 @@ app.post('/api/process-transcript', requireLogin, async (req, res) => {
           'No expenses detected by local parser and OpenAI API key is not configured / quota exceeded.',
       };
 
-      await sendResultEmails(emailList, result, {
+      
+       sendResultEmails(emailList, result, {
         transcript,
         username: req.session.user?.username,
       });
@@ -566,7 +567,7 @@ Rules:
       console.error('OpenAI API error:', r.status, errText);
       const errorResult = { error: 'OpenAI API error', details: errText };
 
-      await sendResultEmails(emailList, errorResult, {
+       sendResultEmails(emailList, errorResult, {
         transcript,
         username: req.session.user?.username,
       });
@@ -580,7 +581,7 @@ Rules:
       console.error('OpenAI returned empty response body', j);
       const errorResult = { error: 'Empty response from OpenAI' };
 
-      await sendResultEmails(emailList, errorResult, {
+       sendResultEmails(emailList, errorResult, {
         transcript,
         username: req.session.user?.username,
       });
@@ -603,7 +604,7 @@ Rules:
             raw: assistantText,
           };
 
-          await sendResultEmails(emailList, errorResult, {
+           sendResultEmails(emailList, errorResult, {
             transcript,
             username: req.session.user?.username,
           });
@@ -617,7 +618,7 @@ Rules:
           raw: assistantText,
         };
 
-        await sendResultEmails(emailList, errorResult, {
+         sendResultEmails(emailList, errorResult, {
           transcript,
           username: req.session.user?.username,
         });
@@ -636,7 +637,7 @@ Rules:
 
     console.log(`Parsed by LLM ${parsed.expenses.length} expense(s).`);
 
-    await sendResultEmails(emailList, parsed, {
+     sendResultEmails(emailList, parsed, {
       transcript,
       username: req.session.user?.username,
     });
@@ -660,7 +661,7 @@ Rules:
         .filter((s) => s.includes('@'))
     )];
 
-    await sendResultEmails(emailList, errorResult, {
+     sendResultEmails(emailList, errorResult, {
       transcript: req.body?.transcript,
       username: req.session?.user?.username,
     });
