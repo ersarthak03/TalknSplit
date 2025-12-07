@@ -1,4 +1,4 @@
-// server.js — VoiceSplit backend with auth + SQLite + email + local parser + OpenAI 
+// server.js — TalknSplit backend with auth + SQLite + email + local parser + OpenAI
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -75,60 +75,8 @@ if (MAIL_HOST && MAIL_USER && MAIL_PASS) {
 } else {
   console.warn('Email not configured (missing EMAIL_HOST/EMAIL_USER/EMAIL_PASS)');
 }
-// Current user info (for sidebar/profile)
-app.get('/api/me', requireLogin, (req, res) => {
-  if (!req.session || !req.session.user) {
-    return res.status(401).json({ error: 'Not logged in' });
-  }
-  res.json({
-    id: req.session.user.id,
-    username: req.session.user.username
-  });
-});
 
-// Change password
-app.post('/api/change-password', requireLogin, (req, res) => {
-  const { currentPassword, newPassword } = req.body || {};
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ error: 'Missing fields' });
-  }
-
-  const userId = req.session.user.id;
-  const username = req.session.user.username;
-
-  if (typeof useMemoryStore !== 'undefined' && useMemoryStore) {
-    // In-memory mode (Render)
-    const idx = memoryUsers.findIndex(u => u.id === userId);
-    if (idx === -1) return res.status(404).json({ error: 'User not found' });
-    if (memoryUsers[idx].password !== currentPassword) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
-    }
-    memoryUsers[idx].password = newPassword;
-    return res.json({ ok: true });
-  }
-
-  // SQLite mode (local dev)
-  db.get('SELECT * FROM users WHERE id = ?', [userId], (err, row) => {
-    if (err) {
-      console.error('DB error on change-password (select):', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    if (!row) return res.status(404).json({ error: 'User not found' });
-    if (row.password !== currentPassword) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
-    }
-
-    db.run('UPDATE users SET password = ? WHERE id = ?', [newPassword, userId], (err2) => {
-      if (err2) {
-        console.error('DB error on change-password (update):', err2);
-        return res.status(500).json({ error: 'Database error' });
-      }
-      return res.json({ ok: true });
-    });
-  });
-});
-
-// Helper: send result emails
+// Helper: send result emails (non-blocking in API)
 async function sendResultEmails(emails, result, options = {}) {
   if (!mailer) {
     console.warn('Mailer not configured, skipping email send.');
@@ -153,7 +101,9 @@ async function sendResultEmails(emails, result, options = {}) {
   text += `Parsed expenses:\n`;
   if (Array.isArray(expenses) && expenses.length > 0) {
     for (const e of expenses) {
-      text += `  - ${e.payer} paid ${e.amount} for ${e.description} (split among: ${Array.isArray(e.split_with) ? e.split_with.join(', ') : ''})\n`;
+      text += `  - ${e.payer} paid ${e.amount} for ${e.description} (split among: ${
+        Array.isArray(e.split_with) ? e.split_with.join(', ') : ''
+      })\n`;
     }
   } else {
     text += `  (none)\n`;
@@ -182,12 +132,12 @@ async function sendResultEmails(emails, result, options = {}) {
     text += `\nNote: ${note}\n`;
   }
 
-  text += `\n\n— Sent by VoiceSplit`;
+  text += `\n\n— Sent by TalknSplit`;
 
   const mailOptions = {
     from: MAIL_FROM,
     to: emails.join(','),
-    subject: 'New expense split from VoiceSplit',
+    subject: 'New expense split from TalknSplit',
     text,
   };
 
@@ -206,7 +156,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(
   session({
-    secret: 'change-this-secret-key', // change this
+    secret: 'change-this-secret-key', // change this in production
     resave: false,
     saveUninitialized: false,
     cookie: { httpOnly: true },
@@ -283,6 +233,46 @@ app.get('/logout', (req, res) => {
   });
 });
 
+// ---------- ACCOUNT / PROFILE API ROUTES ----------
+app.get('/api/me', requireLogin, (req, res) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: 'Not logged in' });
+  }
+  res.json({
+    id: req.session.user.id,
+    username: req.session.user.username,
+  });
+});
+
+app.post('/api/change-password', requireLogin, (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
+
+  const userId = req.session.user.id;
+
+  // SQLite mode (local dev)
+  db.get('SELECT * FROM users WHERE id = ?', [userId], (err, row) => {
+    if (err) {
+      console.error('DB error on change-password (select):', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (!row) return res.status(404).json({ error: 'User not found' });
+    if (row.password !== currentPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    db.run('UPDATE users SET password = ? WHERE id = ?', [newPassword, userId], (err2) => {
+      if (err2) {
+        console.error('DB error on change-password (update):', err2);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      return res.json({ ok: true });
+    });
+  });
+});
+
 // ---------- MAIN PAGES (PROTECTED) ----------
 app.get('/', requireLogin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -292,6 +282,7 @@ app.get('/index.html', requireLogin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Static assets
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ---------------------------
@@ -518,7 +509,6 @@ app.post('/api/process-transcript', requireLogin, async (req, res) => {
         .json({ error: 'Missing or invalid `transcript` in request body.' });
     }
 
-    // Build email list from participants + explicit emails (anything that looks like an email)
     const allStrings = [
       ...(Array.isArray(participants) ? participants : []),
       ...(Array.isArray(emails) ? emails : []),
@@ -529,7 +519,6 @@ app.post('/api/process-transcript', requireLogin, async (req, res) => {
         .filter((s) => s.includes('@'))
     )];
 
-    // 1) Try local deterministic parser
     const fast = parseAndComputeSimpleSplit(
       transcript,
       Array.isArray(participants) ? participants : []
@@ -540,7 +529,8 @@ app.post('/api/process-transcript', requireLogin, async (req, res) => {
         Object.keys(fast.balances)
       );
 
-       sendResultEmails(emailList, fast, {
+      // fire and forget
+      sendResultEmails(emailList, fast, {
         transcript,
         username: req.session.user?.username,
       });
@@ -548,7 +538,6 @@ app.post('/api/process-transcript', requireLogin, async (req, res) => {
       return res.json(fast);
     }
 
-    // 2) Fallback to OpenAI (if key present)
     if (!OPENAI_API_KEY) {
       const result = {
         expenses: [],
@@ -558,8 +547,7 @@ app.post('/api/process-transcript', requireLogin, async (req, res) => {
           'No expenses detected by local parser and OpenAI API key is not configured / quota exceeded.',
       };
 
-      
-       sendResultEmails(emailList, result, {
+      sendResultEmails(emailList, result, {
         transcript,
         username: req.session.user?.username,
       });
@@ -619,7 +607,7 @@ Rules:
       console.error('OpenAI API error:', r.status, errText);
       const errorResult = { error: 'OpenAI API error', details: errText };
 
-       sendResultEmails(emailList, errorResult, {
+      sendResultEmails(emailList, errorResult, {
         transcript,
         username: req.session.user?.username,
       });
@@ -633,7 +621,7 @@ Rules:
       console.error('OpenAI returned empty response body', j);
       const errorResult = { error: 'Empty response from OpenAI' };
 
-       sendResultEmails(emailList, errorResult, {
+      sendResultEmails(emailList, errorResult, {
         transcript,
         username: req.session.user?.username,
       });
@@ -656,7 +644,7 @@ Rules:
             raw: assistantText,
           };
 
-           sendResultEmails(emailList, errorResult, {
+          sendResultEmails(emailList, errorResult, {
             transcript,
             username: req.session.user?.username,
           });
@@ -670,7 +658,7 @@ Rules:
           raw: assistantText,
         };
 
-         sendResultEmails(emailList, errorResult, {
+        sendResultEmails(emailList, errorResult, {
           transcript,
           username: req.session.user?.username,
         });
@@ -689,7 +677,7 @@ Rules:
 
     console.log(`Parsed by LLM ${parsed.expenses.length} expense(s).`);
 
-     sendResultEmails(emailList, parsed, {
+    sendResultEmails(emailList, parsed, {
       transcript,
       username: req.session.user?.username,
     });
@@ -713,7 +701,7 @@ Rules:
         .filter((s) => s.includes('@'))
     )];
 
-     sendResultEmails(emailList, errorResult, {
+    sendResultEmails(emailList, errorResult, {
       transcript: req.body?.transcript,
       username: req.session?.user?.username,
     });
