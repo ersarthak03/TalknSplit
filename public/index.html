@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TalknSplit</title>
+  <style>
+    /* TalknSplit - Professional CSS */
+    
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #0f1724;
+      --bg-card: #1a1f2e;
+      --text-primary: #e6eef6;
+      --text-secondary: #9aa4b2;
+      --text-muted: #6b7280;
+      --accent-primary: #6ee7b7;
+      --accent-secondary: #60a5fa;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-muted: rgba(255, 255, 255, 0.03);
+      --glass-light: rgba(255, 255, 255, 0.04);
+      --glass-subtle: rgba(255, 255, 255, 0.02);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      animation: fadeIn 0.5s ease;
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 24px;
+      margin-bottom: 32px;
+      background: linear-gradient(135deg, var(--glass-light), var(--glass-subtle));
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-md);
+      animation: slideDown 0.5s ease;
+      position: relative;
+    }
+
+    header h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .logout-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: var(--glass-light);
+      color: var(--text-primary);
+    }
+
+    .logout-btn:hover {
+      background: var(--glass-subtle);
+    }
+
+    .recorder {
+      background: linear-gradient(180deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.5s ease 0.1s backwards;
+    }
+
+    button {
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      margin-right: 12px;
+      margin-bottom: 12px;
+    }
+
+    #startBtn {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: #0a0e1a;
+      box-shadow: 0 4px 12px rgba(110, 231, 183, 0.3);
+    }
+
+    #startBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(110, 231, 183, 0.4);
+    }
+
+    #stopBtn {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    #stopBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    #sendBtn {
+      background: linear-gradient(135deg, var(--accent-secondary), #a78bfa);
+      color: white;
+      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+    }
+
+    #sendBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(96, 165, 250, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #status {
+      display: inline-block;
+      padding: 10px 20px;
+      background: var(--glass-light);
+      border: 1px solid var(--border-muted);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin: 16px 0;
+    }
+
+    #transcript {
+      width: 100%;
+      min-height: 150px;
+      padding: 16px;
+      background: var(--glass-subtle);
+      border: 2px dashed var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: 'Monaco', 'Courier New', monospace;
+      resize: vertical;
+      transition: all 0.25s ease;
+      margin: 16px 0;
+    }
+
+    #transcript:focus {
+      outline: none;
+      border-color: var(--accent-secondary);
+      background: var(--glass-light);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    }
+
+    #transcript::placeholder {
+      color: var(--text-muted);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    #participants,
+    #emails {
+      flex: 1;
+      min-width: 280px;
+      padding: 14px 18px;
+      background: var(--glass-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.25s ease;
+    }
+
+    #participants:focus,
+    #emails:focus {
+      outline: none;
+      border-color: var(--accent-secondary);
+      background: var(--glass-light);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    }
+
+    #participants::placeholder,
+    #emails::placeholder {
+      color: var(--text-muted);
+    }
+
+    .results {
+      background: linear-gradient(180deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.5s ease 0.2s backwards;
+      min-height: 200px;
+    }
+
+    .results h2 {
+      font-size: 2rem;
+      margin-bottom: 24px;
+      color: var(--text-primary);
+    }
+
+    .results h3 {
+      font-size: 1.4rem;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      color: var(--accent-primary);
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-subtle);
+    }
+
+    .results h3:first-of-type {
+      margin-top: 0;
+    }
+
+    #resultsArea {
+      color: var(--text-secondary);
+      line-height: 1.8;
+      font-size: 1rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+    }
+
+    ul li {
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      background: var(--glass-subtle);
+      border: 1px solid var(--border-muted);
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+      line-height: 1.6;
+    }
+
+    ul li:hover {
+      background: var(--glass-light);
+      border-color: var(--border-subtle);
+      transform: translateX(6px);
+    }
+
+    ul li strong {
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    ul li em {
+      color: var(--accent-secondary);
+      font-style: normal;
+      font-weight: 700;
+      font-size: 1.05em;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 16px; }
+      header h1 { font-size: 2.2rem; }
+      .recorder, .results { padding: 24px; }
+      .controls { flex-direction: column; }
+      #participants, #emails { min-width: 100%; }
+      button { width: 100%; margin-right: 0; }
+      .logout-btn {
+        position: static;
+        margin-top: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>TalknSplit</h1>
+      <p>Record an expense by voice ("I paid 120 for dinner with Alice and Bob")</p>
+      <button class="logout-btn" onclick="location.href='/logout'">Logout</button>
+    </header>
+
+    <section class="recorder">
+      <button id="startBtn">Start Recording</button>
+      <button id="stopBtn" disabled>Stop</button>
+      <div id="status">Status: idle</div>
+      <textarea id="transcript" placeholder="Transcript will appear here..."></textarea>
+
+      <div class="controls">
+        <input id="participants" placeholder="Participants (comma-separated) e.g. Alice,Bob,Me" />
+        <input id="emails" placeholder="Emails (comma-separated) e.g. a@gmail.com,b@gmail.com" />
+        <button id="sendBtn">Send to server</button>
+      </div>
+    </section>
+
+    <section class="results">
+      <h2>Splits</h2>
+      <div id="resultsArea">No results yet.</div>
+    </section>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const status = document.getElementById('status');
+    const transcriptEl = document.getElementById('transcript');
+    const sendBtn = document.getElementById('sendBtn');
+    const participantsEl = document.getElementById('participants');
+    const emailsEl = document.getElementById('emails');
+    const resultsArea = document.getElementById('resultsArea');
+
+    let recognition;
+    if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.addEventListener('start', () => { status.textContent = 'Status: listening...'; });
+      recognition.addEventListener('end', () => { status.textContent = 'Status: idle'; stopBtn.disabled = true; startBtn.disabled = false; });
+      recognition.addEventListener('result', (e) => {
+        const text = Array.from(e.results).map(r => r[0].transcript).join(' ');
+        transcriptEl.value = (transcriptEl.value ? transcriptEl.value + ' ' : '') + text;
+      });
+    } else {
+      status.textContent = 'Status: SpeechRecognition not supported — please type manually.';
+      startBtn.disabled = true;
+      stopBtn.disabled = true;
+    }
+
+    startBtn.onclick = () => {
+      if (!recognition) return;
+      recognition.start();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+    };
+    stopBtn.onclick = () => recognition && recognition.stop();
+
+    sendBtn.onclick = async () => {
+      const transcript = transcriptEl.value.trim();
+      const participants = participantsEl.value
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      const emails = emailsEl.value
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      if (!transcript) return alert('Please provide a transcript (voice or typed).');
+      resultsArea.textContent = 'Processing...';
+
+      try {
+        const res = await fetch('/api/process-transcript', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript, participants, emails })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        renderResults(data);
+      } catch (err) {
+        resultsArea.textContent = 'Error: ' + err.message;
+      }
+    };
+
+    function renderResults(data) {
+      if (!data) { resultsArea.textContent = 'No data'; return; }
+      const { expenses = [], balances = {}, settleUp = [] } = data;
+      const html = [];
+      html.push('<h3>Parsed expenses</h3>');
+      html.push('<ul>');
+      for (const e of expenses) {
+        html.push(`<li><strong>${escapeHtml(e.payer)}</strong> paid <em>${e.amount}</em> for ${escapeHtml(e.description)} — split among: ${Array.isArray(e.split_with) ? e.split_with.join(', ') : ''}</li>`);
+      }
+      html.push('</ul>');
+
+      html.push('<h3>Balances</h3>');
+      html.push('<ul>');
+      for (const [name, bal] of Object.entries(balances)) {
+        html.push(`<li>${escapeHtml(name)}: ${Number(bal).toFixed(2)}</li>`);
+      }
+      html.push('</ul>');
+
+      html.push('<h3>Suggested Settlements</h3>');
+      if (settleUp && settleUp.length) {
+        html.push('<ul>');
+        for (const s of settleUp) html.push(`<li>${escapeHtml(s.from)} → ${escapeHtml(s.to)} : ${Number(s.amount).toFixed(2)}</li>`);
+        html.push('</ul>');
+      } else html.push('<p>Already balanced.</p>');
+
+      resultsArea.innerHTML = html.join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, function (s) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s];
+      });
+    }
+  </script>
+</body>
+</html>
